@@ -6,25 +6,26 @@
   <title>Shop Dashboard</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    .dashboard-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 20px;
-      padding: 20px;
-    }
     .card {
       background-color: #1a202c;
       color: white;
       padding: 15px;
       border-radius: 8px;
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      margin-bottom: 20px;
     }
     .card h3 {
       font-size: 1.2rem;
       margin-bottom: 10px;
     }
-    .card p {
-      margin: 5px 0;
+    .card input, .card textarea {
+      width: 100%;
+      padding: 5px;
+      margin-bottom: 10px;
+      background-color: #2d3748;
+      color: white;
+      border: none;
+      border-radius: 4px;
     }
     .card button {
       background-color: #4a5568;
@@ -37,13 +38,17 @@
     .card button:hover {
       background-color: #718096;
     }
+    .list {
+      max-height: 200px;
+      overflow-y: auto;
+    }
   </style>
 </head>
 <body class="bg-gray-900 text-white">
   <div id="app" class="min-h-screen">
     <!-- Header -->
     <header class="bg-gray-800 p-4 flex justify-between items-center">
-      <h1 class="text-2xl font-bold">Shop DATA</h1>
+      <h1 class="text-2xl font-bold">Shop Dashboard</h1>
       <nav>
         <button id="loginBtn" class="px-4 py-2 bg-blue-600 rounded mr-2">Đăng Nhập</button>
         <button id="registerBtn" class="px-4 py-2 bg-green-600 rounded mr-2">Đăng Ký</button>
@@ -52,13 +57,13 @@
     </header>
 
     <!-- Main Content -->
-    <main class="container mx-auto">
-      <div id="content" class="dashboard-grid">
+    <main class="container mx-auto p-4">
+      <div id="content">
         <!-- Login Page -->
         <div id="loginPage" class="card hidden">
           <h3>Đăng Nhập</h3>
-          <input id="loginEmail" type="email" placeholder="Email" class="w-full p-2 mb-2 bg-gray-700 text-white border-none rounded">
-          <input id="loginPassword" type="password" placeholder="Mật khẩu" class="w-full p-2 mb-2 bg-gray-700 text-white border-none rounded">
+          <input id="loginEmail" type="email" placeholder="Email">
+          <input id="loginPassword" type="password" placeholder="Mật khẩu">
           <button id="submitLogin" class="w-full">Đăng Nhập</button>
           <p id="loginError" class="text-red-500 hidden">Email hoặc mật khẩu không đúng!</p>
         </div>
@@ -66,70 +71,88 @@
         <!-- Register Page -->
         <div id="registerPage" class="card hidden">
           <h3>Đăng Ký</h3>
-          <input id="registerEmail" type="email" placeholder="Email" class="w-full p-2 mb-2 bg-gray-700 text-white border-none rounded">
-          <input id="registerPassword" type="password" placeholder="Mật khẩu" class="w-full p-2 mb-2 bg-gray-700 text-white border-none rounded">
+          <input id="registerEmail" type="email" placeholder="Email">
+          <input id="registerPassword" type="password" placeholder="Mật khẩu">
           <button id="submitRegister" class="w-full">Đăng Ký</button>
           <p id="registerError" class="text-red-500 hidden">Email đã tồn tại!</p>
           <p id="registerSuccess" class="text-green-500 hidden">Đăng ký thành công!</p>
         </div>
 
-        <!-- Balance Page -->
-        <div id="balancePage" class="card hidden">
-          <h3>Số Dư Tài Khoản</h3>
-          <p>Số dư: <span id="balanceAmount">0</span> VNĐ</p>
-          <input id="depositAmount" type="number" placeholder="Số tiền nạp" class="w-full p-2 mb-2 bg-gray-700 text-white border-none rounded">
-          <button id="submitDeposit" class="w-full">Nạp Tiền</button>
-          <p id="depositSuccess" class="text-green-500 hidden">Nạp tiền thành công!</p>
-        </div>
+        <!-- User Dashboard -->
+        <div id="userDashboard" class="hidden">
+          <!-- Products -->
+          <div id="productsPage" class="card">
+            <h3>Sản Phẩm</h3>
+            <div id="productList" class="list"></div>
+          </div>
 
-        <!-- Products Page -->
-        <div id="productsPage" class="card hidden">
-          <h3>Sản Phẩm</h3>
-          <ul id="productList"></ul>
-        </div>
+          <!-- Orders -->
+          <div id="ordersPage" class="card">
+            <h3>Đơn Hàng Đã Mua</h3>
+            <div id="orderList" class="list"></div>
+          </div>
 
-        <!-- Orders Page -->
-        <div id="ordersPage" class="card hidden">
-          <h3>Đơn Hàng Đã Mua</h3>
-          <ul id="orderList"></ul>
-        </div>
+          <!-- Deposit -->
+          <div id="depositPage" class="card">
+            <h3>Nạp Tiền</h3>
+            <p>Số dư: <span id="balanceAmount">0</span> VNĐ</p>
+            <input id="depositAmount" type="number" placeholder="Số tiền nạp">
+            <button id="submitDeposit">Nạp Tiền</button>
+            <p id="depositSuccess" class="text-green-500 hidden">Yêu cầu nạp tiền đã gửi!</p>
+          </div>
 
-        <!-- Contact Page -->
-        <div id="contactPage" class="card hidden">
-          <h3>Liên Hệ Trợ Giúp</h3>
-          <p>Email: support@shopdashboard.com</p>
-          <p>Hotline: 0123 456 789</p>
-          <textarea id="contactMessage" placeholder="Nhập tin nhắn" class="w-full p-2 mb-2 bg-gray-700 text-white border-none rounded"></textarea>
-          <button id="submitContact" class="w-full">Gửi</button>
-          <p id="contactSuccess" class="text-green-500 hidden">Tin nhắn đã được gửi!</p>
+          <!-- Deposit History -->
+          <div id="depositHistoryPage" class="card">
+            <h3>Lịch Sử Nạp Tiền</h3>
+            <div id="depositHistoryList" class="list"></div>
+          </div>
+
+          <!-- Contact -->
+          <div id="contactPage" class="card">
+            <h3>Liên Hệ Trợ Giúp</h3>
+            <p>Email: support@shopdashboard.com</p>
+            <p>Hotline: 0123 456 789</p>
+            <p><a href="[Zalo Link]" class="text-blue-400">Zalo</a></p>
+            <p><a href="[Facebook Link]" class="text-blue-400">Facebook</a></p>
+            <p><a href="[Telegram Link]" class="text-blue-400">Telegram</a></p>
+            <p><a href="[Lotus Chat Link]" class="text-blue-400">Lotus Chat</a></p>
+            <textarea id="contactMessage" placeholder="Nhập tin nhắn" class="w-full"></textarea>
+            <button id="submitContact" class="w-full">Gửi</button>
+            <p id="contactSuccess" class="text-green-500 hidden">Tin nhắn đã được gửi!</p>
+          </div>
         </div>
       </div>
     </main>
   </div>
 
   <script>
-    // Sample data
-    const products = [
-      { id: 1, name: "Áo Thun", price: 150000 },
-      { id: 2, name: "Quần Jeans", price: 350000 },
-      { id: 3, name: "Giày Sneaker", price: 500000 }
-    ];
-
     // Initialize localStorage
     if (!localStorage.getItem('users')) localStorage.setItem('users', JSON.stringify([]));
     if (!localStorage.getItem('orders')) localStorage.setItem('orders', JSON.stringify([]));
-    if (!localStorage.getItem('balance')) localStorage.setItem('balance', '0');
+    if (!localStorage.getItem('products')) localStorage.setItem('products', JSON.stringify([]));
+    if (!localStorage.getItem('deposits')) localStorage.setItem('deposits', JSON.stringify([]));
+    if (!localStorage.getItem('depositHistory')) localStorage.setItem('depositHistory', JSON.stringify([]));
     if (!localStorage.getItem('currentUser')) localStorage.setItem('currentUser', '');
 
     // DOM elements
     const pages = document.querySelectorAll('.card');
+    const userDashboard = document.getElementById('userDashboard');
     const loginBtn = document.getElementById('loginBtn');
     const registerBtn = document.getElementById('registerBtn');
     const logoutBtn = document.getElementById('logoutBtn');
+    const loginPage = document.getElementById('loginPage');
+    const registerPage = document.getElementById('registerPage');
 
     function showPage(pageId) {
       pages.forEach(page => page.classList.add('hidden'));
       document.getElementById(pageId).classList.remove('hidden');
+      userDashboard.classList.add('hidden');
+      updateNav();
+    }
+
+    function showDashboard() {
+      pages.forEach(page => page.classList.add('hidden'));
+      userDashboard.classList.remove('hidden');
       updateNav();
     }
 
@@ -138,11 +161,6 @@
       loginBtn.classList.toggle('hidden', isLoggedIn);
       registerBtn.classList.toggle('hidden', isLoggedIn);
       logoutBtn.classList.toggle('hidden', !isLoggedIn);
-      if (isLoggedIn) {
-        loadProducts();
-        loadOrders();
-        loadBalance();
-      }
     }
 
     // Login
@@ -153,7 +171,19 @@
       const user = users.find(u => u.email === email && u.password === password);
       if (user) {
         localStorage.setItem('currentUser', email);
-        showPage('balancePage');
+        const userData = {
+          email: user.email,
+          password: user.password,
+          balance: user.balance || 0,
+          orders: JSON.parse(localStorage.getItem('orders')).filter(o => o.user === email),
+          depositHistory: JSON.parse(localStorage.getItem('depositHistory')).filter(d => d.user === email)
+        };
+        alert('Dữ liệu người dùng:\n' + JSON.stringify(userData, null, 2));
+        showDashboard();
+        loadProducts();
+        loadOrders();
+        loadBalance();
+        loadDepositHistory();
       } else {
         document.getElementById('loginError').classList.remove('hidden');
       }
@@ -167,24 +197,9 @@
       if (users.find(u => u.email === email)) {
         document.getElementById('registerError').classList.remove('hidden');
       } else {
-        users.push({ email, password });
+        users.push({ email, password, balance: 0 });
         localStorage.setItem('users', JSON.stringify(users));
         document.getElementById('registerSuccess').classList.remove('hidden');
-      }
-    });
-
-    // Balance
-    function loadBalance() {
-      const balance = localStorage.getItem('balance');
-      document.getElementById('balanceAmount').textContent = parseInt(balance).toLocaleString();
-    }
-    document.getElementById('submitDeposit').addEventListener('click', () => {
-      const amount = parseInt(document.getElementById('depositAmount').value);
-      if (amount > 0) {
-        const currentBalance = parseInt(localStorage.getItem('balance'));
-        localStorage.setItem('balance', (currentBalance + amount).toString());
-        loadBalance();
-        document.getElementById('depositSuccess').classList.remove('hidden');
       }
     });
 
@@ -192,20 +207,20 @@
     function loadProducts() {
       const productList = document.getElementById('productList');
       productList.innerHTML = '';
+      const products = JSON.parse(localStorage.getItem('products'));
       products.forEach(product => {
-        const li = document.createElement('li');
-        li.innerHTML = `${product.name} - ${product.price.toLocaleString()} VNĐ <button class="buy-btn" data-id="${product.id}">Mua</button>`;
-        productList.appendChild(li);
-      });
-      document.querySelectorAll('.buy-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const productId = btn.getAttribute('data-id');
-          const product = products.find(p => p.id == productId);
+        const div = document.createElement('div');
+        div.textContent = `${product.name} - ${product.price.toLocaleString()} VNĐ `;
+        const buyBtn = document.createElement('button');
+        buyBtn.textContent = 'Mua';
+        buyBtn.addEventListener('click', () => {
           const orders = JSON.parse(localStorage.getItem('orders'));
           orders.push({ user: localStorage.getItem('currentUser'), product, date: new Date().toLocaleString() });
           localStorage.setItem('orders', JSON.stringify(orders));
-          alert('Đã thêm vào đơn hàng!');
+          loadOrders();
         });
+        div.appendChild(buyBtn);
+        productList.appendChild(div);
       });
     }
 
@@ -216,9 +231,47 @@
       const orders = JSON.parse(localStorage.getItem('orders'));
       const userOrders = orders.filter(o => o.user === localStorage.getItem('currentUser'));
       userOrders.forEach(order => {
-        const li = document.createElement('li');
-        li.textContent = `${order.product.name} - ${order.product.price.toLocaleString()} VNĐ (Mua lúc: ${order.date})`;
-        orderList.appendChild(li);
+        const div = document.createElement('div');
+        div.textContent = `${order.product.name} - ${order.product.price.toLocaleString()} VNĐ (Mua lúc: ${order.date})`;
+        orderList.appendChild(div);
+      });
+    }
+
+    // Deposit
+    function loadBalance() {
+      const users = JSON.parse(localStorage.getItem('users'));
+      const currentUser = localStorage.getItem('currentUser');
+      const user = users.find(u => u.email === currentUser);
+      document.getElementById('balanceAmount').textContent = (user?.balance || 0).toLocaleString();
+    }
+    document.getElementById('submitDeposit').addEventListener('click', () => {
+      const amount = parseInt(document.getElementById('depositAmount').value);
+      if (amount > 0) {
+        const deposit = { user: localStorage.getItem('currentUser'), amount, date: new Date().toLocaleString() };
+        const deposits = JSON.parse(localStorage.getItem('deposits'));
+        deposits.push(deposit);
+        localStorage.setItem('deposits', JSON.stringify(deposits));
+        localStorage.setItem('depositRequest', JSON.stringify(deposit));
+        
+        const depositHistory = JSON.parse(localStorage.getItem('depositHistory'));
+        depositHistory.push(deposit);
+        localStorage.setItem('depositHistory', JSON.stringify(depositHistory));
+        
+        document.getElementById('depositSuccess').classList.remove('hidden');
+        loadDepositHistory();
+      }
+    });
+
+    // Deposit History
+    function loadDepositHistory() {
+      const depositHistoryList = document.getElementById('depositHistoryList');
+      depositHistoryList.innerHTML = '';
+      const depositHistory = JSON.parse(localStorage.getItem('depositHistory'));
+      const userDeposits = depositHistory.filter(d => d.user === localStorage.getItem('currentUser'));
+      userDeposits.forEach(deposit => {
+        const div = document.createElement('div');
+        div.textContent = `${deposit.amount.toLocaleString()} VNĐ - ${deposit.date}`;
+        depositHistoryList.appendChild(div);
       });
     }
 
@@ -237,7 +290,15 @@
     });
 
     // Initial load
-    showPage('loginPage');
+    if (localStorage.getItem('currentUser')) {
+      showDashboard();
+      loadProducts();
+      loadOrders();
+      loadBalance();
+      loadDepositHistory();
+    } else {
+      showPage('loginPage');
+    }
   </script>
 </body>
 </html>
