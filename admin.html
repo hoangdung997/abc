@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+      padding: 20px;
+    }
+    .card {
+      background-color: #1a202c;
+      color: white;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    .card h3 {
+      font-size: 1.2rem;
+      margin-bottom: 10px;
+    }
+    .card input, .card textarea, .card select {
+      width: 100%;
+      padding: 5px;
+      margin-bottom: 10px;
+      background-color: #2d3748;
+      color: white;
+      border: none;
+      border-radius: 4px;
+    }
+    .card button {
+      background-color: #4a5568;
+      color: white;
+      padding: 5px 10px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .card button:hover {
+      background-color: #718096;
+    }
+    .list {
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    .list div {
+      display: flex;
+      justify-content: space-between;
+      padding: 5px 0;
+    }
+  </style>
+</head>
+<body class="bg-gray-900 text-white">
+  <div id="app" class="min-h-screen">
+    <!-- Header -->
+    <header class="bg-gray-800 p-4 flex justify-between items-center">
+      <h1 class="text-2xl font-bold">Admin Dashboard</h1>
+      <button id="logoutBtn" class="px-4 py-2 bg-red-600 rounded">Đăng Xuất</button>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto">
+      <div id="content" class="dashboard-grid">
+        <!-- User Management -->
+        <div id="userManagement" class="card">
+          <h3>Quản Lý Người Dùng</h3>
+          <input id="newUserEmail" placeholder="Email" type="email">
+          <input id="newUserPassword" placeholder="Mật khẩu" type="password">
+          <button id="addUser">Thêm Người Dùng</button>
+          <div id="userList" class="list"></div>
+        </div>
+
+        <!-- Deposit Management -->
+        <div id="depositManagement" class="card">
+          <h3>Quản Lý Lệnh Nạp Tiền</h3>
+          <div id="depositList" class="list"></div>
+        </div>
+
+        <!-- Product Management -->
+        <div id="productManagement" class="card">
+          <h3>Quản Lý Mặt Hàng</h3>
+          <input id="newProductName" placeholder="Tên sản phẩm">
+          <input id="newProductPrice" placeholder="Giá (VNĐ)" type="number">
+          <button id="addProduct">Thêm Sản Phẩm</button>
+          <h4 class="mt-4">Thêm vào Đơn Hàng</h4>
+          <select id="productSelect"></select>
+          <select id="userSelect"></select>
+          <button id="addToOrder">Thêm vào Đơn Hàng</button>
+          <div id="productList" class="list"></div>
+        </div>
+
+        <!-- Import/Export -->
+        <div id="importExport" class="card">
+          <h3>Nhập/Xuất Dữ Liệu</h3>
+          <textarea id="importData" placeholder="Dán dữ liệu JSON để nhập" rows="4"></textarea>
+          <button id="importButton">Nhập Dữ Liệu</button>
+          <select id="exportOption">
+            <option value="all">Tất cả</option>
+            <option value="users">Người Dùng</option>
+            <option value="products">Sản Phẩm</option>
+            <option value="orders">Đơn Hàng</option>
+          </select>
+          <button id="exportButton">Xuất Dữ Liệu</button>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // Initialize localStorage
+    if (!localStorage.getItem('users')) localStorage.setItem('users', JSON.stringify([]));
+    if (!localStorage.getItem('deposits')) localStorage.setItem('deposits', JSON.stringify([]));
+    if (!localStorage.getItem('products')) localStorage.setItem('products', JSON.stringify([]));
+    if (!localStorage.getItem('orders')) localStorage.setItem('orders', JSON.stringify([]));
+    if (!localStorage.getItem('currentAdmin')) localStorage.setItem('currentAdmin', '');
+
+    // Sample admin login (for simplicity, hardcoded)
+    const adminPassword = "admin123";
+    if (!localStorage.getItem('currentAdmin')) {
+      const password = prompt("Nhập mật khẩu admin:");
+      if (password === adminPassword) {
+        localStorage.setItem('currentAdmin', 'admin');
+      } else {
+        alert("Mật khẩu sai!");
+        window.close();
+      }
+    }
+
+    // DOM elements
+    const logoutBtn = document.getElementById('logoutBtn');
+
+    // User Management
+    function loadUsers() {
+      const userList = document.getElementById('userList');
+      userList.innerHTML = '';
+      const users = JSON.parse(localStorage.getItem('users'));
+      users.forEach((user, index) => {
+        const div = document.createElement('div');
+        const p = document.createElement('p');
+        const button = document.createElement('button');
+        p.textContent = `${user.email}`;
+        button.textContent = 'Xóa';
+        button.addEventListener('click', () => {
+          users.splice(index, 1);
+          localStorage.setItem('users', JSON.stringify(users));
+          loadUsers();
+          loadUserSelect();
+        });
+        div.appendChild(p);
+        div.appendChild(button);
+        userList.appendChild(div);
+      });
+    }
+
+    // Deposit Management
+    function loadDeposits() {
+      const depositList = document.getElementById('depositList');
+      depositList.innerHTML = '';
+      const deposits = JSON.parse(localStorage.getItem('deposits'));
+      deposits.forEach((deposit, index) => {
+        const div = document.createElement('div');
+        const p = document.createElement('p');
+        const button = document.createElement('button');
+        p.textContent = `Mã đơn: ${index + 1} - ${deposit.user} - ${deposit.amount} VNĐ - ${deposit.date}`;
+        button.textContent = 'Phê Duyệt';
+        button.addEventListener('click', () => {
+          const balance = parseInt(localStorage.getItem('balance')) || 0;
+          localStorage.setItem('balance', (balance + deposit.amount).toString());
+          deposits.splice(index, 1);
+          localStorage.setItem('deposits', JSON.stringify(deposits));
+          loadDeposits();
+        });
+        div.appendChild(p);
+        div.appendChild(button);
+        depositList.appendChild(div);
+      });
+    }
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'depositRequest') {
+        const deposit = JSON.parse(e.newValue);
+        const deposits = JSON.parse(localStorage.getItem('deposits'));
+        deposits.push(deposit);
+        localStorage.setItem('deposits', JSON.stringify(deposits));
+        loadDeposits();
+      }
+    });
+
+    // Product Management
+    function loadProducts() {
+      const productList = document.getElementById('productList');
+      productList.innerHTML = '';
+      const products = JSON.parse(localStorage.getItem('products'));
+      products.forEach((product, index) => {
+        const div = document.createElement('div');
+        const p = document.createElement('p');
+        const button = document.createElement('button');
+        p.textContent = `${product.name} - ${product.price} VNĐ`;
+        button.textContent = 'Xóa';
+        button.addEventListener('click', () => {
+          products.splice(index, 1);
+          localStorage.setItem('products', JSON.stringify(products));
+          loadProducts();
+          loadProductSelect();
+        });
+        div.appendChild(p);
+        div.appendChild(button);
+        productList.appendChild(div);
+      });
+    }
+    document.getElementById('addProduct').addEventListener('click', () => {
+      const name = document.getElementById('newProductName').value;
+      const price = parseInt(document.getElementById('newProductPrice').value);
+      if (name && price) {
+        const products = JSON.parse(localStorage.getItem('products'));
+        products.push({ id: products.length + 1, name, price });
+        localStorage.setItem('products', JSON.stringify(products));
+        loadProducts();
+        loadProductSelect();
+      }
+    });
+
+    // Add to Order
+    function loadProductSelect() {
+      const productSelect = document.getElementById('productSelect');
+      productSelect.innerHTML = '';
+      const products = JSON.parse(localStorage.getItem('products'));
+      products.forEach(product => {
+        const option = document.createElement('option');
+        option.value = product.id;
+        option.textContent = `${product.name} - ${product.price} VNĐ`;
+        productSelect.appendChild(option);
+      });
+    }
+    function loadUserSelect() {
+      const userSelect = document.getElementById('userSelect');
+      userSelect.innerHTML = '';
+      const users = JSON.parse(localStorage.getItem('users'));
+      users.forEach(user => {
+        const option = document.createElement('option');
+        option.value = user.email;
+        option.textContent = user.email;
+        userSelect.appendChild(option);
+      });
+    }
+    document.getElementById('addToOrder').addEventListener('click', () => {
+      const productId = document.getElementById('productSelect').value;
+      const userEmail = document.getElementById('userSelect').value;
+      const products = JSON.parse(localStorage.getItem('products'));
+      const product = products.find(p => p.id == productId);
+      const orders = JSON.parse(localStorage.getItem('orders'));
+      orders.push({ user: userEmail, product, date: new Date().toLocaleString() });
+      localStorage.setItem('orders', JSON.stringify(orders));
+      alert(`Đã thêm ${product.name} vào đơn hàng cho ${userEmail}`);
+    });
+
+    // Import/Export
+    document.getElementById('exportButton').addEventListener('click', () => {
+      const option = document.getElementById('exportOption').value;
+      let data = {};
+      if (option === 'all') {
+        data = {
+          users: JSON.parse(localStorage.getItem('users')),
+          deposits: JSON.parse(localStorage.getItem('deposits')),
+          products: JSON.parse(localStorage.getItem('products')),
+          orders: JSON.parse(localStorage.getItem('orders'))
+        };
+      } else if (option === 'users') {
+        data = { users: JSON.parse(localStorage.getItem('users')) };
+      } else if (option === 'products') {
+        data = { products: JSON.parse(localStorage.getItem('products')) };
+      } else if (option === 'orders') {
+        data = { orders: JSON.parse(localStorage.getItem('orders')) };
+      }
+      alert(JSON.stringify(data, null, 2));
+    });
+    document.getElementById('importButton').addEventListener('click', () => {
+      const data = document.getElementById('importData').value;
+      try {
+        const parsedData = JSON.parse(data);
+        if (parsedData.users) localStorage.setItem('users', JSON.stringify(parsedData.users));
+        if (parsedData.deposits) localStorage.setItem('deposits', JSON.stringify(parsedData.deposits));
+        if (parsedData.products) localStorage.setItem('products', JSON.stringify(parsedData.products));
+        if (parsedData.orders) localStorage.setItem('orders', JSON.stringify(parsedData.orders));
+        loadUsers();
+        loadDeposits();
+        loadProducts();
+        loadProductSelect();
+        loadUserSelect();
+      } catch (e) {
+        alert('Dữ liệu không hợp lệ!');
+      }
+    });
+
+    // Logout
+    logoutBtn.addEventListener('click', () => {
+      localStorage.setItem('currentAdmin', '');
+      window.close();
+    });
+
+    // Initial load
+    loadUsers();
+    loadDeposits();
+    loadProducts();
+    loadProductSelect();
+    loadUserSelect();
+  </script>
+</body>
+</html>
