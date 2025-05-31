@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shop Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+      padding: 20px;
+    }
+    .card {
+      background-color: #1a202c;
+      color: white;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    .card h3 {
+      font-size: 1.2rem;
+      margin-bottom: 10px;
+    }
+    .card p {
+      margin: 5px 0;
+    }
+    .card button {
+      background-color: #4a5568;
+      color: white;
+      padding: 5px 10px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .card button:hover {
+      background-color: #718096;
+    }
+  </style>
+</head>
+<body class="bg-gray-900 text-white">
+  <div id="app" class="min-h-screen">
+    <!-- Header -->
+    <header class="bg-gray-800 p-4 flex justify-between items-center">
+      <h1 class="text-2xl font-bold">Shop Dashboard</h1>
+      <nav>
+        <button id="loginBtn" class="px-4 py-2 bg-blue-600 rounded mr-2">Đăng Nhập</button>
+        <button id="registerBtn" class="px-4 py-2 bg-green-600 rounded mr-2">Đăng Ký</button>
+        <button id="logoutBtn" class="px-4 py-2 bg-red-600 rounded hidden">Đăng Xuất</button>
+      </nav>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto">
+      <div id="content" class="dashboard-grid">
+        <!-- Login Page -->
+        <div id="loginPage" class="card hidden">
+          <h3>Đăng Nhập</h3>
+          <input id="loginEmail" type="email" placeholder="Email" class="w-full p-2 mb-2 bg-gray-700 text-white border-none rounded">
+          <input id="loginPassword" type="password" placeholder="Mật khẩu" class="w-full p-2 mb-2 bg-gray-700 text-white border-none rounded">
+          <button id="submitLogin" class="w-full">Đăng Nhập</button>
+          <p id="loginError" class="text-red-500 hidden">Email hoặc mật khẩu không đúng!</p>
+        </div>
+
+        <!-- Register Page -->
+        <div id="registerPage" class="card hidden">
+          <h3>Đăng Ký</h3>
+          <input id="registerEmail" type="email" placeholder="Email" class="w-full p-2 mb-2 bg-gray-700 text-white border-none rounded">
+          <input id="registerPassword" type="password" placeholder="Mật khẩu" class="w-full p-2 mb-2 bg-gray-700 text-white border-none rounded">
+          <button id="submitRegister" class="w-full">Đăng Ký</button>
+          <p id="registerError" class="text-red-500 hidden">Email đã tồn tại!</p>
+          <p id="registerSuccess" class="text-green-500 hidden">Đăng ký thành công!</p>
+        </div>
+
+        <!-- Balance Page -->
+        <div id="balancePage" class="card hidden">
+          <h3>Số Dư Tài Khoản</h3>
+          <p>Số dư: <span id="balanceAmount">0</span> VNĐ</p>
+          <input id="depositAmount" type="number" placeholder="Số tiền nạp" class="w-full p-2 mb-2 bg-gray-700 text-white border-none rounded">
+          <button id="submitDeposit" class="w-full">Nạp Tiền</button>
+          <p id="depositSuccess" class="text-green-500 hidden">Nạp tiền thành công!</p>
+        </div>
+
+        <!-- Products Page -->
+        <div id="productsPage" class="card hidden">
+          <h3>Sản Phẩm</h3>
+          <ul id="productList"></ul>
+        </div>
+
+        <!-- Orders Page -->
+        <div id="ordersPage" class="card hidden">
+          <h3>Đơn Hàng Đã Mua</h3>
+          <ul id="orderList"></ul>
+        </div>
+
+        <!-- Contact Page -->
+        <div id="contactPage" class="card hidden">
+          <h3>Liên Hệ Trợ Giúp</h3>
+          <p>Email: support@shopdashboard.com</p>
+          <p>Hotline: 0123 456 789</p>
+          <textarea id="contactMessage" placeholder="Nhập tin nhắn" class="w-full p-2 mb-2 bg-gray-700 text-white border-none rounded"></textarea>
+          <button id="submitContact" class="w-full">Gửi</button>
+          <p id="contactSuccess" class="text-green-500 hidden">Tin nhắn đã được gửi!</p>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // Sample data
+    const products = [
+      { id: 1, name: "Áo Thun", price: 150000 },
+      { id: 2, name: "Quần Jeans", price: 350000 },
+      { id: 3, name: "Giày Sneaker", price: 500000 }
+    ];
+
+    // Initialize localStorage
+    if (!localStorage.getItem('users')) localStorage.setItem('users', JSON.stringify([]));
+    if (!localStorage.getItem('orders')) localStorage.setItem('orders', JSON.stringify([]));
+    if (!localStorage.getItem('balance')) localStorage.setItem('balance', '0');
+    if (!localStorage.getItem('currentUser')) localStorage.setItem('currentUser', '');
+
+    // DOM elements
+    const pages = document.querySelectorAll('.card');
+    const loginBtn = document.getElementById('loginBtn');
+    const registerBtn = document.getElementById('registerBtn');
+    const logoutBtn = document.getElementById('logoutBtn');
+
+    function showPage(pageId) {
+      pages.forEach(page => page.classList.add('hidden'));
+      document.getElementById(pageId).classList.remove('hidden');
+      updateNav();
+    }
+
+    function updateNav() {
+      const isLoggedIn = !!localStorage.getItem('currentUser');
+      loginBtn.classList.toggle('hidden', isLoggedIn);
+      registerBtn.classList.toggle('hidden', isLoggedIn);
+      logoutBtn.classList.toggle('hidden', !isLoggedIn);
+      if (isLoggedIn) {
+        loadProducts();
+        loadOrders();
+        loadBalance();
+      }
+    }
+
+    // Login
+    document.getElementById('submitLogin').addEventListener('click', () => {
+      const email = document.getElementById('loginEmail').value;
+      const password = document.getElementById('loginPassword').value;
+      const users = JSON.parse(localStorage.getItem('users'));
+      const user = users.find(u => u.email === email && u.password === password);
+      if (user) {
+        localStorage.setItem('currentUser', email);
+        showPage('balancePage');
+      } else {
+        document.getElementById('loginError').classList.remove('hidden');
+      }
+    });
+
+    // Register
+    document.getElementById('submitRegister').addEventListener('click', () => {
+      const email = document.getElementById('registerEmail').value;
+      const password = document.getElementById('registerPassword').value;
+      const users = JSON.parse(localStorage.getItem('users'));
+      if (users.find(u => u.email === email)) {
+        document.getElementById('registerError').classList.remove('hidden');
+      } else {
+        users.push({ email, password });
+        localStorage.setItem('users', JSON.stringify(users));
+        document.getElementById('registerSuccess').classList.remove('hidden');
+      }
+    });
+
+    // Balance
+    function loadBalance() {
+      const balance = localStorage.getItem('balance');
+      document.getElementById('balanceAmount').textContent = parseInt(balance).toLocaleString();
+    }
+    document.getElementById('submitDeposit').addEventListener('click', () => {
+      const amount = parseInt(document.getElementById('depositAmount').value);
+      if (amount > 0) {
+        const currentBalance = parseInt(localStorage.getItem('balance'));
+        localStorage.setItem('balance', (currentBalance + amount).toString());
+        loadBalance();
+        document.getElementById('depositSuccess').classList.remove('hidden');
+      }
+    });
+
+    // Products
+    function loadProducts() {
+      const productList = document.getElementById('productList');
+      productList.innerHTML = '';
+      products.forEach(product => {
+        const li = document.createElement('li');
+        li.innerHTML = `${product.name} - ${product.price.toLocaleString()} VNĐ <button class="buy-btn" data-id="${product.id}">Mua</button>`;
+        productList.appendChild(li);
+      });
+      document.querySelectorAll('.buy-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const productId = btn.getAttribute('data-id');
+          const product = products.find(p => p.id == productId);
+          const orders = JSON.parse(localStorage.getItem('orders'));
+          orders.push({ user: localStorage.getItem('currentUser'), product, date: new Date().toLocaleString() });
+          localStorage.setItem('orders', JSON.stringify(orders));
+          alert('Đã thêm vào đơn hàng!');
+        });
+      });
+    }
+
+    // Orders
+    function loadOrders() {
+      const orderList = document.getElementById('orderList');
+      orderList.innerHTML = '';
+      const orders = JSON.parse(localStorage.getItem('orders'));
+      const userOrders = orders.filter(o => o.user === localStorage.getItem('currentUser'));
+      userOrders.forEach(order => {
+        const li = document.createElement('li');
+        li.textContent = `${order.product.name} - ${order.product.price.toLocaleString()} VNĐ (Mua lúc: ${order.date})`;
+        orderList.appendChild(li);
+      });
+    }
+
+    // Contact
+    document.getElementById('submitContact').addEventListener('click', () => {
+      document.getElementById('contactSuccess').classList.remove('hidden');
+      document.getElementById('contactMessage').value = '';
+    });
+
+    // Navigation
+    loginBtn.addEventListener('click', () => showPage('loginPage'));
+    registerBtn.addEventListener('click', () => showPage('registerPage'));
+    logoutBtn.addEventListener('click', () => {
+      localStorage.setItem('currentUser', '');
+      showPage('loginPage');
+    });
+
+    // Initial load
+    showPage('loginPage');
+  </script>
+</body>
+</html>
